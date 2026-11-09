@@ -1,0 +1,235 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  PATIENT
+  MANAGER
+  STAFF
+}
+
+enum AppointmentStatus {
+  BOOKED
+  CANCELLED
+  COMPLETED
+  RESCHEDULED
+}
+
+enum KnowledgeType {
+  FAQ
+  POLICY
+  TIMING
+  FEE
+}
+
+enum KnowledgeStatus {
+  APPROVED
+  ARCHIVED
+}
+
+enum DraftStatus {
+  PENDING
+  NEEDS_CLARIFICATION
+  APPROVED
+  REJECTED
+}
+
+enum EscalationStatus {
+  OPEN
+  RESOLVED
+}
+
+model Clinic {
+  id           String          @id @default(uuid())
+  name         String
+  address      String
+  phone        String
+  email        String?
+  timezone     String          @default("Asia/Kolkata")
+  workingHours Json
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  users        User[]
+  doctors      Doctor[]
+  appointments Appointment[]
+  knowledge    KnowledgeItem[]
+  drafts       DocumentDraft[]
+  escalations  Escalation[]
+  inviteCodes  InviteCode[]
+  auditLogs    AuditLog[]
+
+  @@map("clinics")
+}
+
+model User {
+  id           String          @id @default(uuid())
+  clinicId     String?
+  telegramId   String          @unique
+  role         Role            @default(PATIENT)
+  name         String?
+  phone        String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  clinic       Clinic?         @relation(fields: [clinicId], references: [id])
+  appointments Appointment[]
+  escalations  Escalation[]
+
+  @@map("users")
+}
+
+model InviteCode {
+  id         String    @id @default(uuid())
+  clinicId   String
+  code       String    @unique
+  role       Role      @default(MANAGER)
+  expiresAt  DateTime
+  usedAt     DateTime?
+  usedBy     String?
+  createdAt  DateTime  @default(now())
+
+  clinic     Clinic    @relation(fields: [clinicId], references: [id])
+
+  @@map("invite_codes")
+}
+
+model Doctor {
+  id              String        @id @default(uuid())
+  clinicId        String
+  name            String
+  specialty       String
+  consultationFee Float
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  clinic          Clinic        @relation(fields: [clinicId], references: [id])
+  schedules       Schedule[]
+  leaves          DoctorLeave[]
+  appointments    Appointment[]
+
+  @@map("doctors")
+}
+
+model Schedule {
+  id          String   @id @default(uuid())
+  doctorId    String
+  weekday     Int      // 0 = Sunday, 1 = Monday, ... 6 = Saturday
+  startTime   String   // "09:00"
+  endTime     String   // "13:00"
+  slotMinutes Int      @default(30)
+
+  doctor      Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("schedules")
+}
+
+model DoctorLeave {
+  id        String   @id @default(uuid())
+  doctorId  String
+  date      DateTime @db.Date
+  reason    String?
+
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_leaves")
+}
+
+model Appointment {
+  id           String            @id @default(uuid())
+  clinicId     String
+  doctorId     String
+  patientId    String
+  patientName  String
+  patientPhone String
+  startsAt     DateTime
+  endsAt       DateTime
+  status       AppointmentStatus @default(BOOKED)
+  bookingCode  String            @unique
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  clinic       Clinic            @relation(fields: [clinicId], references: [id])
+  doctor       Doctor            @relation(fields: [doctorId], references: [id])
+  patient      User              @relation(fields: [patientId], references: [id])
+
+  // Prevent double booking at the same start time for the same doctor when status is BOOKED
+  @@unique([doctorId, startsAt], name: "doctor_slot_active_booking")
+  @@map("appointments")
+}
+
+model KnowledgeItem {
+  id         String          @id @default(uuid())
+  clinicId   String
+  type       KnowledgeType   @default(FAQ)
+  question   String?
+  content    String
+  status     KnowledgeStatus @default(APPROVED)
+  version    Int             @default(1)
+  approvedBy String?
+  approvedAt DateTime?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  clinic     Clinic          @relation(fields: [clinicId], references: [id])
+
+  @@map("knowledge_items")
+}
+
+model DocumentDraft {
+  id            String      @id @default(uuid())
+  clinicId      String
+  uploadedBy    String
+  fileName      String
+  status        DraftStatus @default(PENDING)
+  extractedJson Json
+  issuesJson    Json?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  clinic        Clinic      @relation(fields: [clinicId], references: [id])
+
+  @@map("document_drafts")
+}
+
+model Escalation {
+  id           String           @id @default(uuid())
+  clinicId     String
+  userId       String?
+  patientName  String?
+  patientPhone String?
+  reason       String
+  summary      String
+  status       EscalationStatus @default(OPEN)
+  createdAt    DateTime         @default(now())
+
+  clinic       Clinic           @relation(fields: [clinicId], references: [id])
+  user         User?            @relation(fields: [userId], references: [id])
+
+  @@map("escalations")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  clinicId   String
+  actorType  String
+  actorId    String
+  action     String
+  entity     String
+  entityId   String
+  beforeJson Json?
+  afterJson  Json?
+  requestId  String?
+  createdAt  DateTime @default(now())
+
+  clinic     Clinic   @relation(fields: [clinicId], references: [id])
+
+  @@map("audit_logs")
+}
