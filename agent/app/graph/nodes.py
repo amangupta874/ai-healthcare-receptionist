@@ -226,27 +226,97 @@ async def faq_node(state: ReceptionistState) -> Dict[str, Any]:
                 "escalation_reason": "NO_KNOWLEDGE_AVAILABLE"
             }
 
-        # Match approved items against user query keywords
-        matched_item = None
+        # 1. If general FAQ requested from menu without a specific question
+        if not user_query or user_query in ['menu_faq', 'faq', 'info']:
+            summary = "ℹ️ *Clinic Policies & FAQs:*\n"
+            seen = set()
+            count = 0
+            for item in items:
+                content = item.get('content', '').strip()
+                if content and content not in seen and not content.startswith("Q:") and not content.startswith("A:"):
+                    seen.add(content)
+                    title = item.get('question') or item.get('type')
+                    summary += f"\n• *{title}*: {content}"
+                    count += 1
+                    if count >= 5:
+                        break
+            return {
+                "reply_text": summary,
+                "reply_markup": {"inline_keyboard": [[{"text": "🔙 Back to Menu", "callback_data": "menu_start"}]]}
+            }
+
+        # 2. Intelligent semantic/keyword scoring across all approved knowledge items
+        stopwords = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'do', 'does', 'how', 'what', 'can', 'i', 'you', 'my', 'your', 'kya', 'hai', 'hain', 'kaise', 'hoga', 'chahiye'}
+        import re
+        tokens = [w for w in re.findall(r'\b\w+\b', user_query) if w not in stopwords and len(w) > 1]
+
+        intent_synonyms = {
+            'pay': ['pay', 'paid', 'payment', 'upi', 'cash', 'card', 'online', 'mode'],
+            'payment': ['pay', 'paid', 'payment', 'upi', 'cash', 'card', 'online', 'mode'],
+            'fee': ['fee', 'fees', 'cost', 'charge', 'charges', 'rate', 'rates', 'price', 'pricing'],
+            'fees': ['fee', 'fees', 'cost', 'charge', 'charges', 'rate', 'rates', 'price', 'pricing'],
+            'timing': ['timing', 'timings', 'time', 'hours', 'open', 'close', 'schedule', 'working'],
+            'timings': ['timing', 'timings', 'time', 'hours', 'open', 'close', 'schedule', 'working'],
+            'time': ['timing', 'timings', 'time', 'hours', 'open', 'close', 'schedule', 'working'],
+            'khulta': ['timing', 'timings', 'time', 'hours', 'open', 'close', 'schedule', 'working'],
+            'insurance': ['insurance', 'cashless', 'tpa', 'claim', 'claims'],
+            'parking': ['park', 'parking', 'vehicle', 'car', 'bike', 'scooter'],
+            'emergency': ['emergency', 'urgent', 'casualty', 'trauma'],
+            'doctor': ['doctor', 'dr', 'specialist', 'physician', 'cardiologist'],
+            'cancel': ['cancel', 'cancellation', 'refund'],
+            'wheelchair': ['wheelchair', 'ramp', 'disabled', 'accessible', 'lift']
+        }
+
+        expanded_tokens = set(tokens)
+        for t in tokens:
+            if t in intent_synonyms:
+                expanded_tokens.update(intent_synonyms[t])
+
+        scored = []
         for item in items:
             q_text = (item.get("question") or "").lower()
             c_text = (item.get("content") or "").lower()
-            if any(term in user_query for term in ['fee', 'cost', 'charge']) and item.get("type") == 'FEE':
-                matched_item = item
-                break
-            elif any(term in user_query for term in ['time', 'timing', 'open', 'close', 'hours']) and item.get("type") == 'TIMING':
-                matched_item = item
-                break
-            elif any(term in user_query for term in ['parking', 'park']) and 'parking' in c_text:
-                matched_item = item
-                break
-            elif any(term in user_query for term in ['insurance', 'cashless']) and 'insurance' in c_text:
-                matched_item = item
-                break
+            combined = f"{q_text} {c_text}"
+            score = 0
+            if ('pay' in tokens or 'payment' in tokens or 'kaise' in tokens) and any(w in c_text for w in ['paid', 'pay', 'payment', 'upi', 'card', 'cash']):
+                score += 15
+            if ('parking' in tokens or 'park' in tokens) and 'parking' in c_text:
+                score += 15
+            if ('insurance' in tokens or 'cashless' in tokens) and 'insurance' in c_text:
+                score += 15
+            if ('wheelchair' in tokens or 'ramp' in tokens) and 'wheelchair' in c_text:
+                score += 15
 
-        if matched_item:
+            for token in expanded_tokens:
+                if token in combined:
+                    score += 2
+                if token in q_text:
+                    score += 3
+                if token in c_text:
+                    score += 2
+
+            if "is missing" in c_text or "incomplete" in c_text or "does not state" in c_text:
+                score -= 10
+
+            if score > 0:
+                scored.append((score, item))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        if scored and scored[0][0] >= 3:
+            top_item = scored[0][1]
+            content = top_item['content'].strip()
+            response_text = f"ℹ️ *Clinic Information:*\n\n{content}"
+
+            # Complement payment method with fee schedule if query mentions fees
+            if ('fee' in tokens or 'fees' in tokens) and any(w in content.lower() for w in ['upi', 'cash', 'card']):
+                for _, other in scored[1:]:
+                    if other.get('type') == 'FEE' and '₹' in other.get('content', ''):
+                        response_text += f"\n\n*Consultation Fees:*\n{other['content']}"
+                        break
+
             return {
-                "reply_text": f"ℹ️ *Clinic Information:*\n\n{matched_item['content']}",
+                "reply_text": response_text,
                 "reply_markup": {
                     "inline_keyboard": [
                         [{"text": "📅 Book Appointment", "callback_data": "menu_book"}],
@@ -255,15 +325,29 @@ async def faq_node(state: ReceptionistState) -> Dict[str, Any]:
                 }
             }
 
-        # If general FAQ requested from menu: display all approved summary
-        if state.intent == 'faq' and not user_query:
-            summary = "ℹ️ *Clinic Policies & FAQs:*\n"
-            for item in items[:4]:
-                summary += f"\n• *{item.get('question') or item.get('type')}*: {item['content']}"
-            return {
-                "reply_text": summary,
-                "reply_markup": {"inline_keyboard": [[{"text": "🔙 Back to Menu", "callback_data": "menu_start"}]]}
-            }
+        # Fallback to standard category items if query words match broad type
+        for item in items:
+            c_text = (item.get("content") or "").lower()
+            if any(term in user_query for term in ['fee', 'cost', 'charge']) and item.get("type") == 'FEE':
+                return {
+                    "reply_text": f"ℹ️ *Clinic Information:*\n\n{item['content']}",
+                    "reply_markup": {
+                        "inline_keyboard": [
+                            [{"text": "📅 Book Appointment", "callback_data": "menu_book"}],
+                            [{"text": "🔙 Back to Menu", "callback_data": "menu_start"}]
+                        ]
+                    }
+                }
+            elif any(term in user_query for term in ['time', 'timing', 'open', 'close', 'hours']) and item.get("type") == 'TIMING':
+                return {
+                    "reply_text": f"ℹ️ *Clinic Information:*\n\n{item['content']}",
+                    "reply_markup": {
+                        "inline_keyboard": [
+                            [{"text": "📅 Book Appointment", "callback_data": "menu_book"}],
+                            [{"text": "🔙 Back to Menu", "callback_data": "menu_start"}]
+                        ]
+                    }
+                }
 
         # Unknown query -> escalate to staff per rules
         return {
