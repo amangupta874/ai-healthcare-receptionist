@@ -82,3 +82,4 @@ This log records all key technical and product decisions, context, and rationale
   1. LangGraph workflow uses native `interrupt()` nodes before executing state changes, guaranteeing that the LLM cannot bypass user confirmation.
   2. The backend appointment endpoint requires a valid `confirmation: { confirmed: true, confirmationId }` payload AND an `idempotencyKey` header.
   3. PostgreSQL partial unique index on `(doctor_id, starts_at) WHERE status = 'BOOKED'` guarantees atomic concurrency safety against race conditions.
+

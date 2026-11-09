@@ -12,3 +12,4 @@ const PORT = process.env.BACKEND_PORT || 3000;
 app.listen(PORT, () => {
   logger.info(`🚀 Express backend server listening on http://localhost:${PORT}`);
 });
+

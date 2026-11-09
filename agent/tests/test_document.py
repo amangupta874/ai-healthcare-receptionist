@@ -44,3 +44,4 @@ def test_extract_docx_and_parse():
     assert "timings" in draft
     assert "rules" in draft
     assert "issues" in draft
+

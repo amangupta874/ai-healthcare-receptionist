@@ -137,3 +137,4 @@ def get_main_menu_keyboard(lang: str = 'en') -> Dict[str, Any]:
                 [{"text": "💬 Talk to Staff", "callback_data": "menu_staff"}]
             ]
         }
+

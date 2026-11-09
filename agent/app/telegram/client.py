@@ -106,3 +106,4 @@ class TelegramClient:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(url)
             return resp.json()
+

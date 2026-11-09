@@ -112,3 +112,4 @@ appointmentRoutes.post('/v1/appointments/:id/reschedule', async (req: Request, r
     next(err);
   }
 });
+

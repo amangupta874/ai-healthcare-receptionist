@@ -89,3 +89,4 @@ clinicRoutes.get('/v1/clinics/:clinicId/knowledge', async (req: Request, res: Re
     next(err);
   }
 });
+

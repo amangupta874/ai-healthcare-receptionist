@@ -113,3 +113,4 @@ export function requireClinicBoundary(clinicIdExtractor: (req: Request) => strin
     next();
   };
 }
+

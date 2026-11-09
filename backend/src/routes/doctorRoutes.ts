@@ -92,3 +92,4 @@ doctorRoutes.get('/v1/doctors/:id/availability', async (req: Request, res: Respo
     next(err);
   }
 });
+

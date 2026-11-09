@@ -199,3 +199,4 @@ class BackendClient:
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.post(url, headers=self._headers(telegram_user_id))
             return resp.json()
+

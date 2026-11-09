@@ -67,3 +67,4 @@ async def test_prompt_injection_defense():
         result = await safety_gate_node(state)
         assert result["is_safe"] is False
         assert result["safety_violation_type"] == "injection"
+

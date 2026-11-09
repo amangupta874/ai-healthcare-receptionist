@@ -44,3 +44,4 @@ identityRoutes.post('/v1/identity/link-invite', async (req: Request, res: Respon
     next(err);
   }
 });
+

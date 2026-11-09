@@ -109,3 +109,4 @@ class DocumentParser:
                 "conflicts": conflicts
             }
         }
+

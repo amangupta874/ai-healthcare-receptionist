@@ -48,3 +48,4 @@ class TelegramUpdate(BaseModel):
     update_id: int
     message: Optional[TelegramMessage] = None
     callback_query: Optional[TelegramCallbackQuery] = None
+

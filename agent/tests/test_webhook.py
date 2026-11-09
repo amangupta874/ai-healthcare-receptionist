@@ -49,3 +49,4 @@ def test_webhook_accepts_valid_secret_token():
         json=payload
     )
     assert res.status_code == 200
+

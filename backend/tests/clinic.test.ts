@@ -95,3 +95,4 @@ describe('Clinic API & Isolation', () => {
     expect(res.body.error.code).toBe('INSUFFICIENT_ROLE');
   });
 });
+

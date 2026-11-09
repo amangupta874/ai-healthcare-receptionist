@@ -53,3 +53,4 @@ class CreateEscalationInput(BaseModel):
     summary: str
     patient_name: Optional[str] = None
     patient_phone: Optional[str] = None
+

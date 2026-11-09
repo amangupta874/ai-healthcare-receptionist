@@ -37,3 +37,4 @@
 - **Backend Tests (Jest / Supertest)**: 24 passed out of 24 (100% green).
 - **Agent Tests (Pytest / Asyncio)**: 36 passed out of 36 (100% green).
 - **Combined Test Count**: 60 automated tests covering unit, integration, multilingual intent recognition, failure paths, and concurrency conflict prevention.
+

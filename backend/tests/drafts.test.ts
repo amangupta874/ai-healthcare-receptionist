@@ -87,3 +87,4 @@ describe('Document Drafts & Knowledge Activation API', () => {
     expect(found).toBe(true);
   });
 });
+

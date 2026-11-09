@@ -19,3 +19,4 @@ healthRoutes.get('/health', async (req: Request, res: Response, next: NextFuncti
     });
   }
 });
+

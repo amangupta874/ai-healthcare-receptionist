@@ -60,3 +60,4 @@ async def test_multilingual_language_and_intent(query, expected_lang, expected_i
             assert "paracetamol" not in reply.lower()
             assert "ibuprofen" not in reply.lower()
             assert "crocin" not in reply.lower()
+

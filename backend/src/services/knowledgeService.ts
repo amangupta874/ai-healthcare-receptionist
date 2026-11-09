@@ -222,3 +222,4 @@ export class KnowledgeService {
     return updated;
   }
 }
+

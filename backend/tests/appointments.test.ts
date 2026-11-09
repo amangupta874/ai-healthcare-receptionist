@@ -170,3 +170,4 @@ describe('Appointments API (Booking, Verification, Reschedule, Cancel)', () => {
     expect(appt?.status).toBe('CANCELLED');
   });
 });
+

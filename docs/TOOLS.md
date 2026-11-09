@@ -246,3 +246,4 @@ Every tool request sent to the Express backend includes:
       activated_items_count: int
   ```
 - **Security Check**: Enforces role == `MANAGER` and clinic ownership check on the backend.
+

@@ -76,3 +76,4 @@ describe('Auth & Identity API', () => {
     expect(res.status).toBe(404);
   });
 });
+

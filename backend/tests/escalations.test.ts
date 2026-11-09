@@ -55,3 +55,4 @@ describe('Escalations API', () => {
     expect(res.body.escalations.length).toBeGreaterThan(0);
   });
 });
+

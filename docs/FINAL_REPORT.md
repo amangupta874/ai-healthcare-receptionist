@@ -110,3 +110,4 @@ flowchart LR
 
 ## 7. Conclusion
 The AI Healthcare Receptionist MVP proves that small Indian clinics can achieve enterprise-grade appointment automation and digital reception without massive capital expenditure or telephony complexity. By anchoring the AI in manager-approved facts, strictly isolating administrative reception from clinical advice, and requiring explicit human confirmations for all consequential actions, the system delivers a reliable, compliant, and practical product ready for real-world deployment.
+

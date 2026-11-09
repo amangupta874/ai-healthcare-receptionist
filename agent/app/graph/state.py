@@ -48,3 +48,4 @@ class ReceptionistState(BaseModel):
     reply_markup: Optional[Dict[str, Any]] = None
     escalate_to_staff: bool = False
     escalation_reason: Optional[str] = None
+

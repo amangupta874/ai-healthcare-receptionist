@@ -63,3 +63,4 @@ async def test_booking_executes_only_after_confirmation():
         assert "APT-8F2B" in reply
         assert "Confirmed" in reply or "Confirm ho gayi" in reply
         mock_book.assert_called_once()
+

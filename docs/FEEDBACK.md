@@ -22,3 +22,4 @@ Use this document to log all tester feedback during real-user evaluation session
 - [x] 0 instances of medical prescriptions or diagnoses generated.
 - [x] Manager can complete policy upload and approval workflow unaided.
 - [x] Tri-script interactions (EN / HI / Hinglish) validated.
+

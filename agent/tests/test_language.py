@@ -31,3 +31,4 @@ def test_detect_english():
     ]
     for sample in samples:
         assert detect_language(sample) == "en", f"Failed for '{sample}'"
+

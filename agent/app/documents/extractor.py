@@ -91,3 +91,4 @@ class DocumentExtractor:
             return "\n".join(ocr_parts), True
         except Exception as e:
             raise DocumentExtractionError(f"Failed to perform OCR on scanned PDF: {str(e)}")
+

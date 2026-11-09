@@ -51,3 +51,4 @@ describe('Doctor & Availability API', () => {
     expect(res.body.slots[0]).toHaveProperty('formattedTime');
   });
 });
+
