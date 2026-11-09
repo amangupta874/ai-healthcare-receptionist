@@ -52,7 +52,7 @@ class DocumentParser:
         try:
             client = genai.Client(api_key=settings.LLM_API_KEY)
             response = client.models.generate_content(
-                model=settings.LLM_MODEL or "gemini-2.5-flash",
+                model=settings.LLM_MODEL or "gemini-3.8-flash",
                 contents=f"Document Text:\n\"\"\"\n{raw_text[:8000]}\n\"\"\"",
                 config=types.GenerateContentConfig(
                     system_instruction=SYSTEM_PROMPT,

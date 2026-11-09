@@ -23,7 +23,7 @@ class Settings:
     # LLM
     LLM_PROVIDER: str = os.getenv('LLM_PROVIDER', 'gemini')
     LLM_API_KEY: str = os.getenv('LLM_API_KEY', '')
-    LLM_MODEL: str = os.getenv('LLM_MODEL', 'gemini-2.5-flash')
+    LLM_MODEL: str = os.getenv('LLM_MODEL', 'gemini-3.8-flash')
 
     # Documents / OCR
     MAX_UPLOAD_MB: int = int(os.getenv('MAX_UPLOAD_MB', '10'))
