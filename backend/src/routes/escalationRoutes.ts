@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { EscalationService } from '../services/escalationService';
 import { verifyServiceAuth, resolveUser, requireRole } from '../middleware/auth';
 import { Role, EscalationStatus } from '@prisma/client';
+import { uuidSchema } from '../lib/validation';
 
 export const escalationRoutes = Router();
 
@@ -10,10 +11,10 @@ escalationRoutes.use(verifyServiceAuth);
 escalationRoutes.use(resolveUser);
 
 const CreateEscalationSchema = z.object({
-  clinicId: z.string().uuid(),
-  userId: z.string().optional(),
-  patientName: z.string().optional(),
-  patientPhone: z.string().optional(),
+  clinicId: uuidSchema,
+  userId: z.string().nullable().optional(),
+  patientName: z.string().nullable().optional(),
+  patientPhone: z.string().nullable().optional(),
   reason: z.string().min(2),
   summary: z.string().min(5)
 });
@@ -23,7 +24,12 @@ escalationRoutes.post('/v1/escalations', async (req: Request, res: Response, nex
   try {
     const body = CreateEscalationSchema.parse(req.body);
     const escalation = await EscalationService.createEscalation({
-      ...body,
+      clinicId: body.clinicId,
+      reason: body.reason,
+      summary: body.summary,
+      userId: body.userId || undefined,
+      patientName: body.patientName || undefined,
+      patientPhone: body.patientPhone || undefined,
       requestId: req.requestId
     });
     res.status(201).json(escalation);

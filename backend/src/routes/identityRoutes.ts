@@ -9,7 +9,7 @@ identityRoutes.use(verifyServiceAuth);
 
 const LinkInviteSchema = z.object({
   inviteCode: z.string().min(4).max(32),
-  name: z.string().optional()
+  name: z.string().nullable().optional()
 });
 
 identityRoutes.post('/v1/identity/resolve', async (req: Request, res: Response, next: NextFunction) => {

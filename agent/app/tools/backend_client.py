@@ -26,11 +26,14 @@ class BackendClient:
 
     async def link_invite(self, telegram_user_id: str, invite_code: str, name: Optional[str] = None) -> Dict[str, Any]:
         url = f"{self.base_url}/v1/identity/link-invite"
+        body: Dict[str, Any] = {"inviteCode": invite_code}
+        if name:
+            body["name"] = name
         async with httpx.AsyncClient(timeout=5.0) as client:
             resp = await client.post(
                 url,
                 headers=self._headers(telegram_user_id),
-                json={"inviteCode": invite_code, "name": name}
+                json=body
             )
             return resp.json()
 

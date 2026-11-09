@@ -175,7 +175,14 @@ async def telegram_webhook(
         parts = user_text.strip().split()
         if len(parts) >= 2:
             code = parts[1].strip()
-            link_resp = await backend.link_invite(telegram_user_id, code)
+            user_name = None
+            if update.message and update.message.from_user:
+                first = update.message.from_user.first_name or ""
+                last = update.message.from_user.last_name or ""
+                full = f"{first} {last}".strip()
+                user_name = full or update.message.from_user.username
+
+            link_resp = await backend.link_invite(telegram_user_id, code, name=user_name)
             if link_resp.get("success"):
                 await tg_client.send_message(
                     chat_id,

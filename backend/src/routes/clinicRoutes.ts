@@ -15,7 +15,7 @@ const UpdateClinicSchema = z.object({
   name: z.string().min(2).optional(),
   address: z.string().min(5).optional(),
   phone: z.string().min(5).optional(),
-  workingHours: z.record(z.any()).optional()
+  workingHours: z.record(z.string(), z.any()).optional()
 });
 
 const CreateDoctorSchema = z.object({

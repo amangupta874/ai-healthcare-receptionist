@@ -4,6 +4,7 @@ import { KnowledgeService } from '../services/knowledgeService';
 import { verifyServiceAuth, resolveUser, requireRole } from '../middleware/auth';
 import { Role } from '@prisma/client';
 import { AppError } from '../lib/errors';
+import { uuidSchema } from '../lib/validation';
 
 export const draftRoutes = Router();
 
@@ -11,10 +12,10 @@ draftRoutes.use(verifyServiceAuth);
 draftRoutes.use(resolveUser);
 
 const CreateDraftSchema = z.object({
-  clinicId: z.string().uuid(),
+  clinicId: uuidSchema,
   fileName: z.string().min(1),
-  extractedJson: z.record(z.any()),
-  issuesJson: z.record(z.any()).optional()
+  extractedJson: z.record(z.string(), z.any()),
+  issuesJson: z.record(z.string(), z.any()).nullable().optional()
 });
 
 const ApproveDraftSchema = z.object({

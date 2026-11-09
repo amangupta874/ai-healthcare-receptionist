@@ -28,7 +28,7 @@ export class IdentityService {
     };
   }
 
-  static async linkInviteCode(telegramId: string, inviteCode: string, name?: string, requestId?: string) {
+  static async linkInviteCode(telegramId: string, inviteCode: string, name?: string | null, requestId?: string) {
     return await prisma.$transaction(async (tx) => {
       const invite = await tx.inviteCode.findUnique({
         where: { code: inviteCode.trim().toUpperCase() }

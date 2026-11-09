@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { AppointmentService } from '../services/appointmentService';
 import { verifyServiceAuth, resolveUser } from '../middleware/auth';
+import { uuidSchema } from '../lib/validation';
 
 export const appointmentRoutes = Router();
 
@@ -14,8 +15,8 @@ const ConfirmationSchema = z.object({
 });
 
 const BookAppointmentSchema = z.object({
-  clinicId: z.string().uuid(),
-  doctorId: z.string().uuid(),
+  clinicId: uuidSchema,
+  doctorId: uuidSchema,
   startsAt: z.string().datetime(),
   patientName: z.string().min(2),
   patientPhone: z.string().min(8),
@@ -24,13 +25,13 @@ const BookAppointmentSchema = z.object({
 
 const VerifyAppointmentSchema = z.object({
   bookingCode: z.string().min(4),
-  phone: z.string().optional(),
-  name: z.string().optional()
+  phone: z.string().nullable().optional(),
+  name: z.string().nullable().optional()
 });
 
 const CancelAppointmentSchema = z.object({
   confirmation: ConfirmationSchema,
-  reason: z.string().optional()
+  reason: z.string().nullable().optional()
 });
 
 const RescheduleAppointmentSchema = z.object({
@@ -66,7 +67,7 @@ appointmentRoutes.post('/v1/appointments/verify', async (req: Request, res: Resp
     const body = VerifyAppointmentSchema.parse(req.body);
     const trackingKey = (req.headers['x-telegram-user-id'] as string) || req.ip || 'ANON_IP';
 
-    const result = await AppointmentService.verifyPatient(trackingKey, body.bookingCode, body.phone || body.name);
+    const result = await AppointmentService.verifyPatient(trackingKey, body.bookingCode, (body.phone || body.name) || undefined);
     res.json(result);
   } catch (err) {
     next(err);
@@ -83,7 +84,7 @@ appointmentRoutes.post('/v1/appointments/:id/cancel', async (req: Request, res: 
       req.params.id,
       body.confirmation,
       actorId,
-      body.reason,
+      body.reason || undefined,
       req.requestId
     );
 
