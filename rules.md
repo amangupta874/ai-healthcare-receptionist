@@ -2,8 +2,8 @@
 
 ## 0. Process rules
 1. Read `rules.md`, `tasks.md`, `docs/SPEC.md` at the start of every session.
-2. Work gate by gate (see `tasks.md`). Stop at the end of each gate and wait for approval.
-3. Never drop, shrink or reinterpret a requirement silently. Ask when unclear.
+2. Follow `tasks.md` in order, ticking tasks only when finished and tested.
+3. Never drop, shrink or reinterpret a requirement silently.
 4. Tick a task only after code exists, tests pass, and you have shown evidence.
 5. Log decisions in `docs/DECISIONS.md`. Log status in `docs/PROGRESS.md`.
 6. Make small, focused commits with clear messages (conventional commits: feat:, fix:, test:, docs:, chore:).
@@ -18,7 +18,7 @@
 5. Booking, cancelling and rescheduling require EXPLICIT patient confirmation in a separate step before the backend call.
 6. Extracted policy/document data is a DRAFT. It becomes active only after explicit manager approval. Missing or contradictory info must be surfaced to the manager first.
 7. Patient-facing answers use ONLY manager-approved clinic information. If unknown, sensitive, or unclear: escalate to staff, do not guess.
-8. Collect minimal patient data. Never ask for or store sensitive medical records over Telegram. Do not log message contents containing personal data.
+8. Collect minimal patient data (DPDP Act 2023 compliance: name and phone only). Never ask for or store sensitive medical records over Telegram. Do not log message contents containing personal data.
 9. Clinic data isolation: a clinic can only ever read/write its own records.
 10. Telegram is the ONLY channel. No telephony, SIP, audio streaming or speech features.
 11. Support Hindi, English and Hinglish (Roman-script Hindi) in understanding and replies; reply in the user's language.

@@ -1,0 +1,579 @@
+openapi: 3.0.3
+info:
+  title: AI Healthcare Receptionist Backend API
+  description: System of record API for clinic operations, doctor scheduling, verified appointments, knowledge items, and audit logging.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local development backend server
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /v1/identity/resolve:
+    post:
+      summary: Resolve user identity and role from Telegram User ID
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resolved identity
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  role:
+                    type: string
+                    enum: [PATIENT, MANAGER, STAFF]
+                  clinicId:
+                    type: string
+                    nullable: true
+                  telegramId:
+                    type: string
+                  name:
+                    type: string
+                    nullable: true
+
+  /v1/identity/link-invite:
+    post:
+      summary: Link Telegram ID to clinic manager role using invite code
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - inviteCode
+              properties:
+                inviteCode:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Successfully linked manager to clinic
+        '400':
+          description: Invalid or expired invite code
+
+  /v1/clinics/{clinicId}/profile:
+    get:
+      summary: Get clinic details
+      parameters:
+        - name: clinicId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Clinic details
+    patch:
+      summary: Update clinic profile (Manager only)
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: clinicId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                address:
+                  type: string
+                phone:
+                  type: string
+                workingHours:
+                  type: object
+      responses:
+        '200':
+          description: Updated clinic profile
+
+  /v1/clinics/{clinicId}/doctors:
+    get:
+      summary: List active doctors for a clinic
+      parameters:
+        - name: clinicId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: specialty
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of doctors
+    post:
+      summary: Add a new doctor (Manager only)
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: clinicId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - specialty
+                - consultationFee
+              properties:
+                name:
+                  type: string
+                specialty:
+                  type: string
+                consultationFee:
+                  type: number
+      responses:
+        '201':
+          description: Doctor created
+
+  /v1/doctors/{id}/availability:
+    get:
+      summary: Compute available appointment slots for a doctor on a given date
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: date
+          in: query
+          required: true
+          description: YYYY-MM-DD
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Available slots
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  doctorId:
+                    type: string
+                  doctorName:
+                    type: string
+                  specialty:
+                    type: string
+                  consultationFee:
+                    type: number
+                  date:
+                    type: string
+                  slots:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        startsAt:
+                          type: string
+                          format: date-time
+                        endsAt:
+                          type: string
+                          format: date-time
+                        formattedTime:
+                          type: string
+
+  /v1/appointments:
+    post:
+      summary: Book an appointment (requires explicit confirmation token & idempotency key)
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Idempotency-Key
+          in: header
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clinicId
+                - doctorId
+                - startsAt
+                - patientName
+                - patientPhone
+                - confirmation
+              properties:
+                clinicId:
+                  type: string
+                doctorId:
+                  type: string
+                startsAt:
+                  type: string
+                  format: date-time
+                patientName:
+                  type: string
+                patientPhone:
+                  type: string
+                confirmation:
+                  type: object
+                  required:
+                    - confirmed
+                    - confirmationId
+                  properties:
+                    confirmed:
+                      type: boolean
+                    confirmationId:
+                      type: string
+      responses:
+        '201':
+          description: Appointment successfully booked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  appointmentId:
+                    type: string
+                  bookingCode:
+                    type: string
+                  startsAt:
+                    type: string
+                  status:
+                    type: string
+        '400':
+          description: Confirmation required or slot already taken
+        '409':
+          description: Double booking conflict
+
+  /v1/appointments/verify:
+    post:
+      summary: Verify patient identity using booking code and phone or name
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - bookingCode
+              properties:
+                bookingCode:
+                  type: string
+                phone:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verified:
+                    type: boolean
+                  attemptsRemaining:
+                    type: integer
+                  appointment:
+                    type: object
+                    nullable: true
+
+  /v1/appointments/{id}/cancel:
+    post:
+      summary: Cancel an appointment (requires confirmation token)
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - confirmation
+              properties:
+                confirmation:
+                  type: object
+                  required:
+                    - confirmed
+                    - confirmationId
+                  properties:
+                    confirmed:
+                      type: boolean
+                    confirmationId:
+                      type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Appointment cancelled and slot released
+
+  /v1/appointments/{id}/reschedule:
+    post:
+      summary: Reschedule an appointment atomically to a new slot
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newStartsAt
+                - confirmation
+              properties:
+                newStartsAt:
+                  type: string
+                  format: date-time
+                confirmation:
+                  type: object
+                  required:
+                    - confirmed
+                    - confirmationId
+                  properties:
+                    confirmed:
+                      type: boolean
+                    confirmationId:
+                      type: string
+      responses:
+        '200':
+          description: Appointment rescheduled
+
+  /v1/clinics/{clinicId}/knowledge:
+    get:
+      summary: Retrieve approved clinic knowledge items (FAQs, policies, timings, fees)
+      parameters:
+        - name: clinicId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [FAQ, POLICY, TIMING, FEE]
+      responses:
+        '200':
+          description: List of approved knowledge items
+
+  /v1/drafts:
+    post:
+      summary: Create a structured document draft from extracted policy
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clinicId
+                - fileName
+                - extractedJson
+              properties:
+                clinicId:
+                  type: string
+                fileName:
+                  type: string
+                extractedJson:
+                  type: object
+                issuesJson:
+                  type: object
+      responses:
+        '201':
+          description: Draft created
+
+  /v1/drafts/{id}/approve:
+    post:
+      summary: Explicitly approve a draft and activate its knowledge items
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - approve
+              properties:
+                approve:
+                  type: boolean
+      responses:
+        '200':
+          description: Draft approved and knowledge items activated
+
+  /v1/drafts/{id}/reject:
+    post:
+      summary: Reject a draft
+      security:
+        - ServiceApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x-telegram-user-id
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Draft rejected
+
+  /v1/escalations:
+    post:
+      summary: Create an escalation ticket for staff attention
+      security:
+        - ServiceApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clinicId
+                - reason
+                - summary
+              properties:
+                clinicId:
+                  type: string
+                userId:
+                  type: string
+                patientName:
+                  type: string
+                patientPhone:
+                  type: string
+                reason:
+                  type: string
+                summary:
+                  type: string
+      responses:
+        '201':
+          description: Escalation created
+
+components:
+  securitySchemes:
+    ServiceApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-service-api-key
