@@ -41,7 +41,7 @@ def route_intent(state: ReceptionistState) -> str:
         return "appointment_support"
     elif intent == "execute_cancel":
         return "execute_cancel"
-    elif intent in ["talk_to_staff", "unknown"]:
+    elif intent in ["talk_to_staff", "staff", "menu_staff", "unknown"]:
         return "escalation"
     return "start_menu"
 

@@ -101,7 +101,10 @@ async def intent_router_node(state: ReceptionistState) -> Dict[str, Any]:
     cb = state.callback_data
     if cb:
         if cb.startswith("menu_"):
-            return {"intent": cb.replace("menu_", "")}
+            action = cb.replace("menu_", "")
+            if action == "staff":
+                return {"intent": "talk_to_staff"}
+            return {"intent": action}
         elif cb.startswith("doc_"):
             return {"intent": "select_doctor", "doctor_id": cb.replace("doc_", "")}
         elif cb.startswith("date_"):
