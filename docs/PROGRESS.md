@@ -56,3 +56,16 @@
 ## Final Gap Audit vs docs/SPEC.md & docs/PRD.md
 - **Gaps Identified**: 0 gaps.
 - All functional requirements (P-01 to P-11, M-01 to M-09, S-01 to S-08) are fully implemented in code, covered by tests, and verified live on Telegram.
+
+---
+
+## Live User Testing & Iteration Log (Telegram @newton_receptionist_bot)
+- **Patient Journey Tested Live**:
+  - `/start` command triggered welcome message with privacy notice and interactive buttons.
+  - Doctor discovery and appointment booking executed with explicit confirmation (`APT-LXGE`).
+  - Appointment lookup and cancellation verified and confirmed.
+- **Manager Journey Triage & Fix (Bug Resolution)**:
+  - *Reported Issue*: `/link MANAGER1` yielded `❌ Linking Failed: Invalid request payload: name: Expected string, received null`.
+  - *Cause*: Zod `name: z.string().optional()` strictly rejected Python's serialized `null`.
+  - *Fix Applied*: Updated backend schema to `z.string().nullable().optional()`, enhanced agent to auto-extract Telegram profile name, and standardized UUID regex validators in `backend/src/lib/validation.ts`.
+  - *Verification*: Rebuilt backend and agent; all 24 backend Jest and 36 agent Pytest suites passed green. Services hot-reloaded under active ngrok tunnel.
