@@ -1,0 +1,21 @@
+# SECURITY CHECKLIST (run in security-review gate and before every deployment)
+- [ ] No secrets in repo/history; `.env` ignored; secrets rotated if leaked
+- [ ] Telegram webhook secret token verified on every request
+- [ ] Service-to-service auth (agent->backend) enforced; keys not hardcoded
+- [ ] Every protected endpoint checks role AND clinic ownership (write tests that try cross-clinic access)
+- [ ] Patient verification cannot be brute-forced (attempt limit + lockout + escalation)
+- [ ] Booking/cancel/reschedule cannot execute without confirmation token (test by calling the API directly)
+- [ ] LLM output never authorizes anything; tools validate inputs with schemas
+- [ ] Prompt injection: user text and document text treated as data; tests for "ignore previous instructions", hidden text in PDF/DOCX
+- [ ] Upload validation: MIME + extension + magic bytes, size limit, page limit, temp files deleted, no path traversal, no macro execution
+- [ ] Input validation with zod/Pydantic on all endpoints
+- [ ] Rate limiting per user/IP; request size limits
+- [ ] SQL injection: only Prisma/parameterized queries
+- [ ] Logs contain no tokens or personal data; request IDs present
+- [ ] Error responses leak no stack traces/internal IDs
+- [ ] DB least-privilege user; backups configured; TLS in production
+- [ ] Dependencies audited (`npm audit`, `pip-audit`); lockfiles committed
+- [ ] HTTP security headers (helmet), CORS restricted
+- [ ] Data minimization and retention documented; deletion path for patient data
+- [ ] Privacy notice shown on /start (what data is collected, no medical records via Telegram)
+- [ ] Medical-advice refusal tests pass
