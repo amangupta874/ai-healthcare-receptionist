@@ -13,6 +13,8 @@ Use this document to log all tester feedback during real-user evaluation session
 | 09 Nov 2026 | Patient | Hindi | Timings FAQ (*"क्लिनिक कब खुलता है?"*) | PASSED | 5/5 | Clear Hindi reply with exact clinic timings. | Closed |
 | 09 Nov 2026 | Manager | English | Invite linking (`/link MANAGER1`) | PASSED | 5/5 | Account immediately linked as Manager. | Closed |
 | 09 Nov 2026 | Manager | English | Policy upload & approval | PASSED | 5/5 | Extracted 4 FAQs and timings, activated on 1 click. | Closed |
+| 09 Nov 2026 | Patient | English | Payment FAQ after policy upload | PASSED | 5/5 | Enhanced semantic ranking to prioritize payment policies over base fee schedule. | Closed |
+| 09 Nov 2026 | Patient | English | Talk to Staff menu button | PASSED | 5/5 | Fixed menu_staff callback mapping to trigger escalation node cleanly. | Closed |
 
 ---
 
